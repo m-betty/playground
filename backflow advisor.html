@@ -1,0 +1,117 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Backflow Prevention Advisor</title>
+     <style>
+         body { font-family: sans-serif; line-height: 1.6; margin: 20px; }
+         h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+         h3 { color: #555; margin-top: 20px; }
+         ul { margin-bottom: 20px; }
+         li { margin-bottom: 5px; }
+         .important { font-weight: bold; }
+         .diagram { font-style: italic; margin-left: 20px;}
+         .question { margin-bottom: 15px; }
+         button { margin-top: 10px; padding: 10px 15px; cursor: pointer; }
+         #result { margin-top: 20px; font-weight: bold; }
+     </style>
+ </head>
+ <body>
+ 
+     <h2>Backflow Prevention Advisor</h2>
+     <p>
+         Answer the following questions to determine the best backflow prevention device for your situation.
+     </p>
+     
+     <div class="question" id="question1">
+         <h3>Question 1: Is your application subject to continuous pressure (more than 12 hours at a time)?</h3>
+         <button onclick="answerQuestion(1, true)">Yes</button>
+         <button onclick="answerQuestion(1, false)">No</button>
+     </div>
+ 
+      <div class="question" id="question2" style="display:none;">
+        <h3>Question 2: Is there a risk of back pressure (downstream pressure exceeding supply pressure)?</h3>
+        <button onclick="answerQuestion(2, true)">Yes</button>
+        <button onclick="answerQuestion(2, false)">No</button>
+      </div>
+ 
+      <div class="question" id="question3" style="display:none;">
+         <h3>Question 3: Is the application considered a health hazard (potential pollutants are toxic, like fertilizer chemicals)?</h3>
+         <button onclick="answerQuestion(3, true)">Yes</button>
+         <button onclick="answerQuestion(3, false)">No</button>
+      </div>
+      
+        <div class="question" id="question4" style="display:none;">
+           <h3>Question 4: Is this for a residential water system containment, such as a drinking water supply service line or outlet?</h3>
+           <button onclick="answerQuestion(4, true)">Yes</button>
+           <button onclick="answerQuestion(4, false)">No</button>
+       </div>
+   
+       <div class="question" id="question5" style="display:none;">
+            <h3>Question 5: Is this for a boiler feed line?</h3>
+            <button onclick="answerQuestion(5, true)">Yes</button>
+            <button onclick="answerQuestion(5, false)">No</button>
+        </div>
+ 
+
+     <div id="result"></div>
+ 
+
+ <script>
+     let answers = {};
+     let currentQuestion = 1;
+ 
+
+     function answerQuestion(questionNumber, answer) {
+         answers[questionNumber] = answer;
+         document.getElementById(`question${questionNumber}`).style.display = 'none';
+         currentQuestion++;
+         if (currentQuestion === 2 && answers[1] == false) {
+             currentQuestion = 3
+         }
+         
+          if (currentQuestion <= 5) {
+              document.getElementById(`question${currentQuestion}`).style.display = 'block';
+          } else {
+                determineDevice();
+         }
+    }
+ 
+
+     function determineDevice() {
+         let resultText = "";
+         if (answers[1] === true) { // Continuous pressure
+             if (answers[2] === true) { // Back pressure risk
+                if (answers[3] === true) { // High health hazard
+                   resultText = "Recommended: **Reduced Pressure Zone Assembly (RPZ)** [4-6]";
+                 } else {
+                   resultText = "Recommended: **Double Check Valve Assembly (DCVA)** [7]";
+               }
+             } else if (answers[2] === false) { // No back pressure risk
+                  if (answers[3] === true) { // High health hazard
+                   resultText = "Recommended: **Reduced Pressure Zone Assembly (RPZ)** [4-6]";
+                 } else if (answers[3] === false) {
+                       resultText = "Recommended: **Pressure Vacuum Breaker (PVB)** [8-11]";
+                }
+             }
+         } else if (answers[1] === false) { // Not continuous pressure
+                if(answers[3] === true) {
+                   resultText = "Recommended: **Reduced Pressure Zone Assembly (RPZ)** or **Air Gap** [4-6, 12]";
+               }
+             else if (answers[13] === true) {
+                   resultText = "Recommended: **Dual Check Valve** [14, 15]";
+                 }
+                 else if (answers[16] === true) {
+                        resultText = "Recommended: **Combination Fill Valve and Backflow Preventer** [17, 18]";
+                  }
+                 else {
+                resultText = "Consider: **Atmospheric Vacuum Breaker (AVB)** or **Hose Tap Vacuum Breaker** (for hose applications) [8, 19-22]"
+                }
+         }
+         document.getElementById('result').innerHTML = resultText;
+     }
+ </script>
+ 
+ </body>
+ </html>
