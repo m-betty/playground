@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NZ Pump Selection Guide</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .warning { color: #721c24; background: #f8d7da; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .result { border: 1px solid #28a745; background: #d4edda; padding: 15px; margin-top: 20px; border-radius: 4px; }
+        .section { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>NZ Pump Selection Guide</h1>
+        <select onchange="update()" id="type">
+            <option value="">Select Application Type...</option>
+            <option value="domestic">Domestic Water Supply</option>
+            <option value="irrigation">Irrigation System</option>
+            <option value="pool">Swimming Pool</option>
+            <option value="wastewater">Wastewater/Sewage</option>
+            <option value="rural">Rural Water Reticulation</option>
+        </select>
+        
+        <div id="formContent" style="margin-top: 20px;"></div>
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function update() {
+            const type = document.getElementById('type').value;
+            const formContent = document.getElementById('formContent');
+            
+            if (type === 'rural') {
+                formContent.innerHTML = `
+                    <div class="section">
+                        <h3>Rural Water Reticulation Details</h3>
+                        <div class="warning">
+                            Important: Compliance required with NZ Animal Welfare Act 1999 and Regional Council water regulations
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Water Source:</label>
+                            <select id="waterSource" onchange="showSourceSpecifics()">
+                                <option value="bore">Bore/Well</option>
+                                <option value="stream">Stream/River</option>
+                                <option value="dam">Dam/Pond</option>
+                                <option value="spring">Spring</option>
+                            </select>
+                        </div>
+
+                        <div id="sourceSpecifics"></div>
+
+                        <div class="form-group">
+                            <label>Livestock Type:</label>
+                            <select id="livestockType">
+                                <option value="dairy">Dairy Cattle</option>
+                                <option value="beef">Beef Cattle</option>
+                                <option value="sheep">Sheep</option>
+                                <option value="deer">Deer</option>
+                                <option value="mixed">Mixed Livestock</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Number of Animals:</label>
+                            <input type="number" id="animalCount" min="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Number of Troughs:</label>
+                            <input type="number" id="troughCount" min="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Vertical Distance from Water Source to Pump (meters):</label>
+                            <input type="number" id="sourceHeight" min="0" step="0.1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Maximum Distance to Furthest Trough (meters):</label>
+                            <input type="number" id="maxDistance" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Height Difference from Pump to Highest Trough (meters):</label>
+                            <input type="number" id="heightDifference" min="0" step="0.1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Pipe Diameter (mm):</label>
+                            <select id="pipeDiameter">
+                                <option value="25">25mm</option>
+                                <option value="32">32mm</option>
+                                <option value="40">40mm</option>
+                                <option value="50">50mm</option>
+                                <option value="63">63mm</option>
+                            </select>
+                        </div>
+
+                        <button onclick="calculateRural()">Calculate Requirements</button>
+                    </div>
+                `;
+                showSourceSpecifics();
+            }
+        }
+
+        function showSourceSpecifics() {
+            const source = document.getElementById('waterSource').value;
+            const specificsDiv = document.getElementById('sourceSpecifics');
+            
+            let html = '';
+            switch(source) {
+                case 'bore':
+                    html = `
+                        <div class="form-group">
+                            <label>Bore Depth (meters):</label>
+                            <input type="number" id="boreDepth" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Static Water Level (meters from surface):</label>
+                            <input type="number" id="staticWaterLevel" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Bore Yield (liters/hour):</label>
+                            <input type="number" id="boreYield" min="0">
+                        </div>
+                    `;
+                    break;
+                case 'stream':
+                case 'dam':
+                    html = `
+                        <div class="form-group">
+                            <label>Water Level Variation (meters):</label>
+                            <input type="number" id="waterLevelVariation" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Distance from Bank (meters):</label>
+                            <input type="number" id="bankDistance" min="0">
+                        </div>
+                    `;
+                    break;
+                case 'spring':
+                    html = `
+                        <div class="form-group">
+                            <label>Spring Flow Rate (liters/hour):</label>
+                            <input type="number" id="springFlow" min="0">
+                        </div>
+                    `;
+                    break;
+            }
+            specificsDiv.innerHTML = html;
+        }
+
+        function calculateRural() {
+            const waterSource = document.getElementById('waterSource').value;
+            const livestockType = document.getElementById('livestockType').value;
+            const animalCount = parseInt(document.getElementById('animalCount').value);
+            const troughCount = parseInt(document.getElementById('troughCount').value);
+            const sourceHeight = parseFloat(document.getElementById('sourceHeight').value);
+            const maxDistance = parseFloat(document.getElementById('maxDistance').value);
+            const heightDifference = parseFloat(document.getElementById('heightDifference').value);
+            const pipeDiameter = parseInt(document.getElementById('pipeDiameter').value);
+            
+            const waterRequirements = {
+                dairy: 70,
+                beef: 45,
+                sheep: 6,
+                deer: 12,
+                mixed: 30
+            };
+
+            // Calculate total head
+            const totalHead = sourceHeight + heightDifference;
+            
+            // Calculate friction loss (simplified calculation)
+            const frictionLoss = (maxDistance * 0.02); // Assuming 2% friction loss per meter
+            
+            // Daily water requirement
+            const dailyWater = animalCount * waterRequirements[livestockType];
+            
+            // Peak flow (40% of daily in 2 hours)
+            const peakHourly = dailyWater * 0.4 / 2;
+            
+            // Total dynamic head
+            const dynamicHead = totalHead + frictionLoss;
+            
+            // Required pump power (kW) = (Flow × Head × 9.81) / (367 × Efficiency)
+            const pumpPower = (peakHourly * dynamicHead * 9.81) / (367 * 0.65);
+
+            const result = document.getElementById('result');
+            result.innerHTML = `
+                <div class="result">
+                    <h3>System Requirements:</h3>
+                    <p>Daily Water Requirement: ${dailyWater.toLocaleString()} liters/day</p>
+                    <p>Peak Flow Rate: ${Math.ceil(peakHourly)} liters/hour</p>
+                    <p>Total Dynamic Head: ${Math.ceil(dynamicHead)} meters</p>
+                    <p>Minimum Pump Power Required: ${pumpPower.toFixed(2)} kW</p>
+                    
+                    <h3>Recommended Pump System:</h3>
+                    ${getPumpRecommendation(peakHourly, dynamicHead, waterSource)}
+                    
+                    <h3>System Components Required:</h3>
+                    <ul>
+                        <li>Main pump (as specified above)</li>
+                        <li>Backup pump recommended for critical operations</li>
+                        <li>Water meter for monitoring usage</li>
+                        <li>Pressure tank (size: ${Math.ceil(peakHourly/6)} liters)</li>
+                        <li>${pipeDiameter}mm main distribution pipe</li>
+                        <li>Float valves for all troughs</li>
+                        <li>Non-return valve</li>
+                        <li>Isolation valves at key points</li>
+                        <li>Pressure relief valve</li>
+                        ${waterSource === 'stream' || waterSource === 'dam' ? '<li>Intake filter system</li>' : ''}
+                    </ul>
+
+                    <h3>Important Considerations:</h3>
+                    <ul>
+                        <li>Install water meters to monitor usage and detect leaks</li>
+                        <li>Consider storage tanks for peak demand management</li>
+                        <li>Regular maintenance schedule recommended</li>
+                        <li>Check regional council requirements for water extraction</li>
+                        <li>Install backflow prevention as required</li>
+                        <li>Consider water quality testing system</li>
+                        <li>Emergency water storage recommended</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        function getPumpRecommendation(flow, head, source) {
+            let recommendation = '';
+            
+            if (source === 'bore') {
+                if (flow < 5000 && head < 50) {
+                    recommendation = `
+                        <p><strong>Primary Pump: Grundfos SQ 3-65</strong></p>
+                        <ul>
+                            <li>Flow Rate: Up to 3,600 L/hour</li>
+                            <li>Maximum Head: 90m</li>
+                            <li>Power: 1.0kW</li>
+                            <li>Suitable for: Bore installations</li>
+                        </ul>
+                    `;
+                } else {
+                    recommendation = `
+                        <p><strong>Primary Pump: Grundfos SP 8A-25</strong></p>
+                        <ul>
+                            <li>Flow Rate: Up to 8,000 L/hour</li>
+                            <li>Maximum Head: 150m</li>
+                            <li>Power: 3.0kW</li>
+                            <li>Suitable for: Deep bore installations</li>
+                        </ul>
+                    `;
+                }
+            } else {
+                if (flow < 5000) {
+                    recommendation = `
+                        <p><strong>Primary Pump: Davey D15VA</strong></p>
+                        <ul>
+                            <li>Flow Rate: Up to 7,200 L/hour</li>
+                            <li>Maximum Head: 47m</li>
+                            <li>Power: 1.5kW</li>
+                            <li>Suitable for: Surface water extraction</li>
+                        </ul>
+                    `;
+                } else {
+                    recommendation = `
+                        <p><strong>Primary Pump: Grundfos CR 15-3</strong></p>
+                        <ul>
+                            <li>Flow Rate: Up to 15,000 L/hour</li>
+                            <li>Maximum Head: 65m</li>
+                            <li>Power: 3.0kW</li>
+                            <li>Suitable for: Large scale water distribution</li>
+                        </ul>
+                    `;
+                }
+            }
+            return recommendation;
+        }
+    </script>
+</body>
+</html>
